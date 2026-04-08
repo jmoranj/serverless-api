@@ -1,0 +1,27 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: jmoranj
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: serverless-api
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: serverless-api
+
+pservice: requests-api
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+
+functions:
+  createRequest:
+    handler: src/handlers/test.test
+    events:
+      - httpApi:
+          path: /requests
+          method: get
+
+build:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    target: node18
