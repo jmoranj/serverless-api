@@ -1,5 +1,6 @@
 import { ZodError } from "zod";
 import { APIGatewayProxyResult } from "aws-lambda";
+import { logError } from "./logger";
 
 export class AppError extends Error {
   constructor(
@@ -23,40 +24,70 @@ export class BadRequestError extends AppError {
   }
 }
 
+function withRequestId(
+  result: APIGatewayProxyResult,
+  requestId: string
+): APIGatewayProxyResult {
+  return {
+    ...result,
+    headers: {
+      ...result.headers,
+      "x-request-id": requestId,
+    },
+  };
+}
+
 export function handleError(
-  context: string,
-  error: unknown
+  handlerName: string,
+  error: unknown,
+  requestId: string
 ): APIGatewayProxyResult {
   if (error instanceof ZodError) {
-    return {
-      statusCode: 422,
-      body: JSON.stringify({
-        message: "Validation failed",
-        issues: error.issues.map((i) => ({
-          field: i.path.join("."),
-          message: i.message,
-        })),
-      }),
-    };
+    return withRequestId(
+      {
+        statusCode: 422,
+        body: JSON.stringify({
+          message: "Validation failed",
+          issues: error.issues.map((i) => ({
+            field: i.path.join("."),
+            message: i.message,
+          })),
+        }),
+      },
+      requestId
+    );
   }
 
   if (error instanceof AppError) {
-    return {
-      statusCode: error.statusCode,
-      body: JSON.stringify({ message: error.message }),
-    };
+    return withRequestId(
+      {
+        statusCode: error.statusCode,
+        body: JSON.stringify({ message: error.message }),
+      },
+      requestId
+    );
   }
 
   if (error instanceof SyntaxError) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ message: "Invalid JSON body" }),
-    };
+    return withRequestId(
+      {
+        statusCode: 400,
+        body: JSON.stringify({ message: "Invalid JSON body" }),
+      },
+      requestId
+    );
   }
 
-  console.error(JSON.stringify({ handler: context, error: String(error) }));
-  return {
-    statusCode: 500,
-    body: JSON.stringify({ message: "Internal server error" }),
-  };
+  logError("Unhandled error in handler", requestId, {
+    handler: handlerName,
+    error: String(error),
+  });
+
+  return withRequestId(
+    {
+      statusCode: 500,
+      body: JSON.stringify({ message: "Internal server error" }),
+    },
+    requestId
+  );
 }

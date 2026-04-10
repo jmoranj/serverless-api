@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "../../handlers/getRequestById";
-import { makeEvent, mockRequest } from "../helpers";
+import { makeEvent, mockLambdaContext, mockRequest } from "../helpers";
 
 const mockFindById = vi.hoisted(() => vi.fn());
 
@@ -22,7 +22,7 @@ describe("GET /requests/{id}", () => {
 
     const event = makeEvent({ pathParameters: { id: "abc-123" } });
 
-    const result = await handler(event);
+    const result = await handler(event, mockLambdaContext());
     const body = JSON.parse(result.body);
 
     expect(result.statusCode).toBe(200);
@@ -34,7 +34,7 @@ describe("GET /requests/{id}", () => {
 
     const event = makeEvent({ pathParameters: { id: "nonexistent" } });
 
-    const result = await handler(event);
+    const result = await handler(event, mockLambdaContext());
     const body = JSON.parse(result.body);
 
     expect(result.statusCode).toBe(404);
@@ -44,7 +44,7 @@ describe("GET /requests/{id}", () => {
   it("returns 400 when id path param is missing", async () => {
     const event = makeEvent({ pathParameters: null });
 
-    const result = await handler(event);
+    const result = await handler(event, mockLambdaContext());
     const body = JSON.parse(result.body);
 
     expect(result.statusCode).toBe(400);

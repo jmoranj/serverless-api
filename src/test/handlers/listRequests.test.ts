@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "../../handlers/listRequests";
-import { makeEvent, mockRequest } from "../helpers";
+import { makeEvent, mockLambdaContext, mockRequest } from "../helpers";
 
 const mockFindMany = vi.hoisted(() => vi.fn());
 
@@ -12,6 +12,8 @@ vi.mock("../../repositories/requestRepository", () => ({
 
 vi.mock("../../database/database", () => ({ prisma: {} }));
 
+const ctx = mockLambdaContext();
+
 describe("GET /requests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -20,7 +22,7 @@ describe("GET /requests", () => {
   it("returns 200 with a list of requests", async () => {
     mockFindMany.mockResolvedValue([mockRequest, { ...mockRequest, id: "xyz-456" }]);
 
-    const result = await handler(makeEvent());
+    const result = await handler(makeEvent(), ctx);
     const body = JSON.parse(result.body);
 
     expect(result.statusCode).toBe(200);
@@ -35,7 +37,8 @@ describe("GET /requests", () => {
     const result = await handler(
       makeEvent({
         queryStringParameters: { createdBy: "mario" },
-      })
+      }),
+      ctx
     );
     const body = JSON.parse(result.body);
 
@@ -50,7 +53,8 @@ describe("GET /requests", () => {
     await handler(
       makeEvent({
         queryStringParameters: { status: "OPEN" },
-      })
+      }),
+      ctx
     );
 
     expect(mockFindMany).toHaveBeenCalledWith({ status: "OPEN" });
@@ -62,7 +66,8 @@ describe("GET /requests", () => {
     await handler(
       makeEvent({
         queryStringParameters: { createdBy: "mario", status: "DONE" },
-      })
+      }),
+      ctx
     );
 
     expect(mockFindMany).toHaveBeenCalledWith({
@@ -75,7 +80,8 @@ describe("GET /requests", () => {
     const result = await handler(
       makeEvent({
         queryStringParameters: { status: "INVALID" },
-      })
+      }),
+      ctx
     );
     const body = JSON.parse(result.body);
 
@@ -90,7 +96,8 @@ describe("GET /requests", () => {
     const result = await handler(
       makeEvent({
         queryStringParameters: { createdBy: "a" },
-      })
+      }),
+      ctx
     );
     const body = JSON.parse(result.body);
 
@@ -103,7 +110,7 @@ describe("GET /requests", () => {
   it("returns 200 with an empty list when there are no requests", async () => {
     mockFindMany.mockResolvedValue([]);
 
-    const result = await handler(makeEvent());
+    const result = await handler(makeEvent(), ctx);
     const body = JSON.parse(result.body);
 
     expect(result.statusCode).toBe(200);
@@ -113,7 +120,7 @@ describe("GET /requests", () => {
   it("returns 500 when repository throws an unexpected error", async () => {
     mockFindMany.mockRejectedValue(new Error("DB connection lost"));
 
-    const result = await handler(makeEvent());
+    const result = await handler(makeEvent(), ctx);
     const body = JSON.parse(result.body);
 
     expect(result.statusCode).toBe(500);

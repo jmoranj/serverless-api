@@ -1,5 +1,12 @@
-import { APIGatewayProxyEvent } from "aws-lambda";
+import { APIGatewayProxyEvent, Context } from "aws-lambda";
 import { Request } from "../models/requestSchema";
+
+/** Context mínimo para testes de handler (awsRequestId usado quando não há requestId do API Gateway). */
+export function mockLambdaContext(
+  awsRequestId = "test-aws-request-id"
+): Context {
+  return { awsRequestId } as Context;
+}
 
 export function makeEvent(
   overrides: Partial<APIGatewayProxyEvent> = {}

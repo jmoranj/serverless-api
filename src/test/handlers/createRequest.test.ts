@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "../../handlers/createRequest";
-import { makeEvent, mockRequest } from "../helpers";
+import { makeEvent, mockLambdaContext, mockRequest } from "../helpers";
 
 const mockCreate = vi.hoisted(() => vi.fn());
 
@@ -28,10 +28,11 @@ describe("POST /requests", () => {
       }),
     });
 
-    const result = await handler(event);
+    const result = await handler(event, mockLambdaContext());
     const body = JSON.parse(result.body);
 
     expect(result.statusCode).toBe(201);
+    expect(result.headers?.["x-request-id"]).toBe("test-aws-request-id");
     expect(body.data).toMatchObject({ id: "abc-123", title: "Fix login bug" });
   });
 
@@ -45,7 +46,7 @@ describe("POST /requests", () => {
       }),
     });
 
-    const result = await handler(event);
+    const result = await handler(event, mockLambdaContext());
     const body = JSON.parse(result.body);
 
     expect(result.statusCode).toBe(422);
@@ -65,7 +66,7 @@ describe("POST /requests", () => {
       }),
     });
 
-    const result = await handler(event);
+    const result = await handler(event, mockLambdaContext());
     const body = JSON.parse(result.body);
 
     expect(result.statusCode).toBe(422);
@@ -77,7 +78,7 @@ describe("POST /requests", () => {
   it("returns 422 when required fields are missing", async () => {
     const event = makeEvent({ body: JSON.stringify({ title: "Only title" }) });
 
-    const result = await handler(event);
+    const result = await handler(event, mockLambdaContext());
     const body = JSON.parse(result.body);
 
     expect(result.statusCode).toBe(422);
@@ -87,7 +88,7 @@ describe("POST /requests", () => {
   it("returns 400 when body is invalid JSON", async () => {
     const event = makeEvent({ body: "not-json" });
 
-    const result = await handler(event);
+    const result = await handler(event, mockLambdaContext());
     const body = JSON.parse(result.body);
 
     expect(result.statusCode).toBe(400);
@@ -97,7 +98,7 @@ describe("POST /requests", () => {
   it("returns 422 when body is null", async () => {
     const event = makeEvent({ body: null });
 
-    const result = await handler(event);
+    const result = await handler(event, mockLambdaContext());
 
     expect(result.statusCode).toBe(422);
   });
