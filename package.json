@@ -3,7 +3,7 @@
     "predeploy": "npx prisma generate",
     "deploy": "env -u DB_HOST serverless deploy",
     "dev": "serverless offline",
-    "migrate": "aws lambda invoke --function-name serverless-api-dev-migrate --payload '{}' --cli-binary-format raw-in-base64-out /tmp/migration.json && cat /tmp/migration.json",
+    "migrate": "aws lambda invoke --function-name serverless-api-migrate --payload '{}' --cli-binary-format raw-in-base64-out /tmp/migration.json && cat /tmp/migration.json",
     "migrate:local": "serverless invoke local --function migrate",
     "test": "vitest --ui",
     "test:watch": "vitest run --reporter=verbose"
