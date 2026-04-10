@@ -1,25 +1,26 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { RequestRepository } from "../repositories/requestRepository";
-import { RequestService } from "../services/requestService";
+import { TicketRepository } from "../repositories/ticketRepository";
+import { TicketService } from "../services/ticketService";
 import { BadRequestError, handleError } from "../utils/errors";
 
-const service = new RequestService(new RequestRepository());
+const service = new TicketService(new TicketRepository());
 
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { id } = event.pathParameters ?? {};
-    
+
     if (!id) throw new BadRequestError("Missing path parameter: id");
 
-    const request = await service.getById(id);
+    const ticket = await service.getById(id);
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ data: request }),
+      body: JSON.stringify({ data: ticket }),
     };
+    
   } catch (error) {
-    return handleError("getRequestById", error);
+    return handleError("getTicketById", error);
   }
 };

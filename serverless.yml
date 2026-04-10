@@ -24,27 +24,28 @@ provider:
         Pass: ${env:DB_PASSWORD}
         Host: !GetAtt RDSInstance.Endpoint.Address
         DBName: ${env:DB_NAME}
+    NODE_ENV: ${opt:stage, "dev"}
 
 functions:
-  createRequest:
-    handler: src/handlers/createRequest.handler
+  createTicket:
+    handler: src/handlers/createTicket.handler
     events:
       - httpApi:
-          path: /requests
+          path: /tickets
           method: post
 
-  getRequestById:
-    handler: src/handlers/getRequestById.handler
+  getTicketById:
+    handler: src/handlers/getTicketById.handler
     events:
       - httpApi:
-          path: /requests/{id}
+          path: /tickets/{id}
           method: get
 
-  listRequests:
-    handler: src/handlers/listRequests.handler
+  listTickets:
+    handler: src/handlers/listTickets.handler
     events:
       - httpApi:
-          path: /requests
+          path: /tickets
           method: get
 
   migrate:

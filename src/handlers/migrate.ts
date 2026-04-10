@@ -3,7 +3,7 @@ import { prisma } from "../database/database";
 export const handler = async () => {
   try {
     await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS requests (
+      CREATE TABLE IF NOT EXISTS tickets (
         id          VARCHAR(36)                                           NOT NULL,
         title       VARCHAR(255)                                          NOT NULL,
         description TEXT                                                  NOT NULL,
@@ -16,6 +16,7 @@ export const handler = async () => {
     `);
 
     return { statusCode: 200, body: JSON.stringify({ message: "Migration applied successfully" }) };
+    
   } catch (error) {
     console.error(error);
     return { statusCode: 500, body: JSON.stringify({ message: "Migration failed", error: String(error) }) };
