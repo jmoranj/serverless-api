@@ -5,23 +5,168 @@ app: serverless-api
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: serverless-api
 
-pservice: requests-api
+plugins:
+  - serverless-offline
 
 provider:
   name: aws
-  runtime: nodejs18.x
+  runtime: nodejs20.x
+  vpc:
+    subnetIds:
+      - !Ref PrivateSubnetA
+      - !Ref PrivateSubnetB
+    securityGroupIds:
+      - !GetAtt LambdaSecurityGroup.GroupId
+  environment:
+    DATABASE_URL: !Sub
+      - "mysql://${User}:${Pass}@${Host}:3306/${DBName}"
+      - User: ${env:DB_USER}
+        Pass: ${env:DB_PASSWORD}
+        Host: !GetAtt RDSInstance.Endpoint.Address
+        DBName: ${env:DB_NAME}
 
 functions:
   createRequest:
-    handler: src/handlers/test.test
+    handler: src/handlers/createRequest.handler
+    events:
+      - httpApi:
+          path: /requests
+          method: post
+
+  getRequestById:
+    handler: src/handlers/getRequestById.handler
+    events:
+      - httpApi:
+          path: /requests/{id}
+          method: get
+
+  listRequests:
+    handler: src/handlers/listRequests.handler
     events:
       - httpApi:
           path: /requests
           method: get
+
+  migrate:
+    handler: src/handlers/migrate.handler
 
 build:
   esbuild:
     bundle: true
     minify: false
     sourcemap: true
-    target: node18
+    target: node20
+    external: []
+
+resources:
+  Parameters:
+    DBPassword:
+      Type: String
+      NoEcho: true
+      Default: ${env:DB_PASSWORD}
+
+  Resources:
+    # ---- Subnets privadas ----
+    PrivateSubnetA:
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId: ${env:VPC_ID}
+        CidrBlock: "172.31.100.0/24"  # faixa fora das subnets públicas existentes
+        AvailabilityZone: us-east-1a
+        MapPublicIpOnLaunch: false
+
+    PrivateSubnetB:
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId: ${env:VPC_ID}
+        CidrBlock: "172.31.101.0/24"
+        AvailabilityZone: us-east-1c
+        MapPublicIpOnLaunch: false
+
+    # ---- NAT Gateway (permite que Lambdas saiam para internet) ----
+    ElasticIP:
+      Type: AWS::EC2::EIP
+      Properties:
+        Domain: vpc
+
+    NatGateway:
+      Type: AWS::EC2::NatGateway
+      Properties:
+        AllocationId: !GetAtt ElasticIP.AllocationId
+        SubnetId: subnet-0f6822b23e5c4929e  # subnet pública existente em us-east-1a
+
+    # ---- Route Table para as subnets privadas ----
+    PrivateRouteTable:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: ${env:VPC_ID}
+
+    PrivateRoute:
+      Type: AWS::EC2::Route
+      Properties:
+        RouteTableId: !Ref PrivateRouteTable
+        DestinationCidrBlock: "0.0.0.0/0"
+        NatGatewayId: !Ref NatGateway
+
+    PrivateSubnetARouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId: !Ref PrivateSubnetA
+        RouteTableId: !Ref PrivateRouteTable
+
+    PrivateSubnetBRouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId: !Ref PrivateSubnetB
+        RouteTableId: !Ref PrivateRouteTable
+
+    # ---- Security Groups ----
+    LambdaSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Security group for Lambda functions
+        VpcId: ${env:VPC_ID}
+
+    RDSSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Allow Lambda to reach RDS MySQL
+        VpcId: ${env:VPC_ID}
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 3306
+            ToPort: 3306
+            SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
+
+    # ---- RDS ----
+    RDSSubnetGroup:
+      Type: AWS::RDS::DBSubnetGroup
+      Properties:
+        DBSubnetGroupDescription: Subnet group for serverless-api RDS
+        SubnetIds:
+          - !Ref PrivateSubnetA
+          - !Ref PrivateSubnetB
+
+    RDSInstance:
+      Type: AWS::RDS::DBInstance
+      DeletionPolicy: Snapshot # gera snapshot antes de deletar
+      Properties:
+        DBInstanceIdentifier: serverless-api-db
+        DBName: ${env:DB_NAME}
+        DBInstanceClass: db.t3.micro
+        Engine: mysql
+        EngineVersion: "8.0"
+        MasterUsername: ${env:DB_USER}
+        MasterUserPassword: !Ref DBPassword
+        AllocatedStorage: "20"
+        StorageType: gp2
+        PubliclyAccessible: false
+        MultiAZ: false
+        DBSubnetGroupName: !Ref RDSSubnetGroup
+        VPCSecurityGroups:
+          - !GetAtt RDSSecurityGroup.GroupId
+
+  Outputs:
+    RDSEndpoint:
+      Value: !GetAtt RDSInstance.Endpoint.Address
+      Description: Endpoint do banco RDS MySQL
