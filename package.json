@@ -1,11 +1,12 @@
 {
   "scripts": {
     "predeploy": "npx prisma generate",
-    "deploy": "serverless deploy",
+    "deploy": "env -u DB_HOST serverless deploy",
+    "dev": "serverless offline",
     "migrate": "aws lambda invoke --function-name serverless-api-dev-migrate --payload '{}' --cli-binary-format raw-in-base64-out /tmp/migration.json && cat /tmp/migration.json",
-    "test": "vitest run --reporter=verbose",
-    "test:watch": "vitest --reporter=verbose",
-    "test:ui": "vitest --ui"
+    "migrate:local": "serverless invoke local --function migrate",
+    "test": "vitest --ui",
+    "test:watch": "vitest run --reporter=verbose"
   },
   "devDependencies": {
     "@types/node": "^25.5.2",
@@ -21,7 +22,6 @@
     "@prisma/client": "^7.7.0",
     "@types/aws-lambda": "^8.10.161",
     "aws-lambda": "^1.0.7",
-    "mysql2": "^3.21.0",
     "zod": "^4.3.6"
   }
 }
