@@ -1,69 +1,101 @@
-<!--
-title: 'AWS Simple HTTP Endpoint example in NodeJS'
-description: 'This template demonstrates how to make a simple HTTP API with Node.js running on AWS Lambda and API Gateway using the Serverless Framework.'
-layout: Doc
-framework: v4
-platform: AWS
-language: nodeJS
-authorLink: 'https://github.com/serverless'
-authorName: 'Serverless, Inc.'
-authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
--->
+# serverless-api
 
-# Serverless Framework Node HTTP API on AWS
+API HTTP de **requests** (tickets) em **AWS Lambda** + **API Gateway HTTP API**, persistência em **Amazon RDS MySQL** via **Prisma**.
 
-This template demonstrates how to make a simple HTTP API with Node.js running on AWS Lambda and API Gateway using the Serverless Framework.
+## Pré-requisitos
 
-This template does not include any kind of persistence (database). For more advanced examples, check out the [serverless/examples repository](https://github.com/serverless/examples/) which includes Typescript, Mongo, DynamoDB and other examples.
+| Ferramenta | Uso |
+|------------|-----|
+| **Node.js 20+** | Runtime alinhado ao Lambda (`nodejs20.x`). |
+| **AWS CLI** | Configurado (`aws configure`) com permissão para deploy na conta/região. |
+| **Arquivo `.env`** | Variáveis abaixo disponíveis no shell na hora do `deploy` (ou carregadas pelo seu fluxo). |
 
-## Usage
+## Variáveis de ambiente
 
-### Deployment
+Conexão com o MySQL usa **só** `DB_*`. Você precisa definir **antes do deploy**:
 
-In order to deploy the example, you need to run the following command:
+| Variável | Descrição |
+|----------|-----------|
+| `DB_USER` | Necessário apenas para acessar bancos fora da AWS. |
+| `DB_PASSWORD` | Senha (também usada no parâmetro CloudFormation `DBPassword`). |
+| `DB_NAME` | Nome do banco criado na instância RDS (e no local). |
+| `VPC_ID` | ID da VPC onde serão criadas subnets privadas, NAT e o RDS. |
+| `DB_HOST` | **Local:** host do MySQL (ex. `127.0.0.1`). **AWS:** não exporte no shell no deploy — o `npm run deploy` remove `DB_HOST` do ambiente e o Serverless preenche com o endpoint do RDS. |
+| `DB_PORT` | Opcional; padrão `3306`. |
 
-```
-serverless deploy
-```
+`NODE_ENV` segue o stage do Serverless (padrão `dev`).
 
-After running deploy, you should see output similar to:
+## Por que RDS (MySQL) e não só DynamoDB?
 
-```
-Deploying "serverless-http-api" to stage "dev" (us-east-1)
+- **Modelo relacional**: entidades com campos fixos, status e datas — encaixa bem em tabelas SQL e **integridade** por schema.  
+- **Consultas e evolução**: filtros, ordenação e relatórios futuros com **SQL** e **migrations** (Prisma), sem desnormalizar tudo em padrões de acesso key-value.  
+- **Transações ACID** quando precisar garantir consistência entre escritas relacionadas.  
+- **DynamoDB** é forte em escala por chave de partição e padrões específicos; para este domínio pequeno/médio, **RDS + SQL** reduz complexidade de modelagem e consultas ad hoc.
 
-✔ Service deployed to stack serverless-http-api-dev (91s)
+## Desenvolvimento local
 
-endpoint: GET - https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/
-functions:
-  hello: serverless-http-api-dev-hello (1.6 kB)
-```
-
-_Note_: In current form, after deployment, your API is public and can be invoked by anyone. For production deployments, you might want to configure an authorizer. For details on how to do that, refer to [HTTP API (API Gateway V2) event docs](https://www.serverless.com/framework/docs/providers/aws/events/http-api).
-
-### Invocation
-
-After successful deployment, you can call the created application via HTTP:
-
-```
-curl https://xxxxxxx.execute-api.us-east-1.amazonaws.com/
+```bash
+npm install
+npm predeploy
 ```
 
-Which should result in response similar to:
+Subir a API localmente (MySQL acessível; no `.env` defina `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, ver tabela acima):
 
-```json
-{ "message": "Go Serverless v4! Your function executed successfully!" }
+```bash
+npm migrate:local
+npm run dev
 ```
 
-### Local development
+A API fica em `http://localhost:3000` (porta padrão do `serverless-offline`; ajuste se mudar no `serverless.yml`).
 
-The easiest way to develop and test your function is to use the `dev` command:
+## Deploy e migrate
+
+```bash
+npm run deploy    # gera Prisma Client (predeploy) e faz serverless deploy
+npm run migrate   # invoca a Lambda `migrate` no AWS (cria/atualiza tabela no RDS)
+```
+
+O script `migrate` chama a função `serverless-api-dev-migrate` (stage **dev**). Se usar outro stage, ajuste o nome da função no `package.json`.
+
+Após o deploy, o terminal mostra o **endpoint** da HTTP API — use essa URL como base nos exemplos abaixo.
+
+## API em produção (evidência de deploy)
+
+**Base URL** :
 
 ```
-serverless dev
+https://SEU_API_ID.execute-api.us-east-1.amazonaws.com
 ```
 
-This will start a local emulator of AWS Lambda and tunnel your requests to and from AWS Lambda, allowing you to interact with your function as if it were running in the cloud.
+> Cole aqui a URL completa retornada pelo `serverless deploy` (linha `endpoint` ou `HttpApiUrl`).
 
-Now you can invoke the function as before, but this time the function will be executed locally. Now you can develop your function locally, invoke it, and see the results immediately without having to re-deploy.
+## Exemplos com curl
 
-When you are done developing, don't forget to run `serverless deploy` to deploy the function to the cloud.
+Defina `BASE` com a URL acima (sem barra final).
+
+**POST** — criar request:
+
+```bash
+curl -s -X POST "$BASE/requests" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Bug no login","description":"Erro ao salvar senha","priority":"HIGH","createdBy":"joao"}'
+```
+
+**GET** — listar (opcional: `createdBy`, `status`):
+
+```bash
+curl -s "$BASE/requests"
+curl -s "$BASE/requests?createdBy=joao&status=OPEN"
+```
+
+**GET** — por id:
+
+```bash
+curl -s "$BASE/requests/SEU_UUID_AQUI"
+```
+
+## Testes
+
+```bash
+npm test
+```
