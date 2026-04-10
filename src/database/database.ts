@@ -10,7 +10,7 @@ function createClient(): PrismaClient {
 
   const adapter = new PrismaMariaDb({
     host: hostname,
-    port: Number(port) || 3306,
+    port: Number(port) ?? 3306,
     user: username,
     password,
     database: pathname.slice(1),
@@ -21,6 +21,6 @@ function createClient(): PrismaClient {
 
 export const prisma = globalWithPrisma.prisma ?? createClient();
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "prod") {
   globalWithPrisma.prisma = prisma;
 }
