@@ -4,24 +4,28 @@ API HTTP de **requests** (tickets) em **AWS Lambda** + **API Gateway HTTP API**,
 
 ## Pré-requisitos
 
-| Ferramenta | Uso |
-|------------|-----|
-| **Node.js 20+** | Runtime alinhado ao Lambda (`nodejs20.x`). |
-| **AWS CLI** | Configurado (`aws configure`) com permissão para deploy na conta/região. |
+
+| Ferramenta         | Uso                                                                                       |
+| ------------------ | ----------------------------------------------------------------------------------------- |
+| **Node.js 20+**    | Runtime alinhado ao Lambda (`nodejs20.x`).                                                |
+| **AWS CLI**        | Configurado (`aws configure`) com permissão para deploy na conta/região.                  |
 | **Arquivo `.env`** | Variáveis abaixo disponíveis no shell na hora do `deploy` (ou carregadas pelo seu fluxo). |
+
 
 ## Variáveis de ambiente
 
-Conexão com o MySQL usa **só** `DB_*`. Você precisa definir **antes do deploy**:
+Conexão com o MySQL usa **só** `DB_`*. Você precisa definir **antes do deploy**:
 
-| Variável | Descrição |
-|----------|-----------|
-| `DB_USER` | Necessário apenas para acessar bancos fora da AWS. |
-| `DB_PASSWORD` | Senha (também usada no parâmetro CloudFormation `DBPassword`). |
-| `DB_NAME` | Nome do banco criado na instância RDS (e no local). |
-| `VPC_ID` | ID da VPC onde serão criadas subnets privadas, NAT e o RDS. |
-| `DB_HOST` | **Local:** host do MySQL (ex. `127.0.0.1`). **AWS:** não exporte no shell no deploy — o `npm run deploy` remove `DB_HOST` do ambiente e o Serverless preenche com o endpoint do RDS. |
-| `DB_PORT` | Opcional; padrão `3306`. |
+
+| Variável      | Descrição                                                                                                                                                                            |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DB_USER`     | Necessário apenas para acessar bancos fora da AWS.                                                                                                                                   |
+| `DB_PASSWORD` | Senha (também usada no parâmetro CloudFormation `DBPassword`).                                                                                                                       |
+| `DB_NAME`     | Nome do banco criado na instância RDS (e no local).                                                                                                                                  |
+| `VPC_ID`      | ID da VPC onde serão criadas subnets privadas, NAT e o RDS.                                                                                                                          |
+| `DB_HOST`     | **Local:** host do MySQL (ex. `127.0.0.1`). **AWS:** não exporte no shell no deploy — o `npm run deploy` remove `DB_HOST` do ambiente e o Serverless preenche com o endpoint do RDS. |
+| `DB_PORT`     | Opcional; padrão `3306`.                                                                                                                                                             |
+
 
 `NODE_ENV` segue o stage do Serverless (padrão `dev`).
 
@@ -64,19 +68,15 @@ Após o deploy, o terminal mostra o **endpoint** da HTTP API — use essa URL co
 **Base URL** :
 
 ```
-https://SEU_API_ID.execute-api.us-east-1.amazonaws.com
+https://53djo9piw6.execute-api.us-east-1.amazonaws.com/
 ```
 
-> Cole aqui a URL completa retornada pelo `serverless deploy` (linha `endpoint` ou `HttpApiUrl`).
-
 ## Exemplos com curl
-
-Defina `BASE` com a URL acima (sem barra final).
 
 **POST** — criar request:
 
 ```bash
-curl -s -X POST "$BASE/requests" \
+curl -s -X POST "https://53djo9piw6.execute-api.us-east-1.amazonaws.com/requests" \
   -H "Content-Type: application/json" \
   -d '{"title":"Bug no login","description":"Erro ao salvar senha","priority":"HIGH","createdBy":"joao"}'
 ```
@@ -84,14 +84,14 @@ curl -s -X POST "$BASE/requests" \
 **GET** — listar (opcional: `createdBy`, `status`):
 
 ```bash
-curl -s "$BASE/requests"
-curl -s "$BASE/requests?createdBy=joao&status=OPEN"
+curl -s "https://53djo9piw6.execute-api.us-east-1.amazonaws.com/requests"
+curl -s "https://53djo9piw6.execute-api.us-east-1.amazonaws.com/requests?createdBy=joao&status=OPEN"
 ```
 
 **GET** — por id:
 
 ```bash
-curl -s "$BASE/requests/SEU_UUID_AQUI"
+curl -s "https://53djo9piw6.execute-api.us-east-1.amazonaws.com/requests/SEU_UUID_AQUI"
 ```
 
 ## Testes
@@ -99,3 +99,4 @@ curl -s "$BASE/requests/SEU_UUID_AQUI"
 ```bash
 npm test
 ```
+
