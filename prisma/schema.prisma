@@ -6,16 +6,16 @@ datasource db {
   provider = "mysql"
 }
 
-model Ticket {
+model Request {
   id          String          @id @default(uuid())
   title       String
   description String          @db.Text
   priority    Priority
   createdBy   String          @map("created_by")
-  status      TicketStatus    @default(OPEN)
+  status      RequestStatus   @default(OPEN)
   createdAt   DateTime        @default(now()) @map("created_at")
 
-  @@map("tickets")
+  @@map("requests")
 }
 
 enum Priority {
@@ -24,7 +24,7 @@ enum Priority {
   HIGH
 }
 
-enum TicketStatus {
+enum RequestStatus {
   OPEN
   IN_PROGRESS
   DONE

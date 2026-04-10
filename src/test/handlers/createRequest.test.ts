@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { handler } from "../../handlers/createTicket";
-import { makeEvent, mockTicket } from "../helpers";
+import { handler } from "../../handlers/createRequest";
+import { makeEvent, mockRequest } from "../helpers";
 
 const mockCreate = vi.hoisted(() => vi.fn());
 
-vi.mock("../../repositories/ticketRepository", () => ({
-  TicketRepository: class {
+vi.mock("../../repositories/requestRepository", () => ({
+  RequestRepository: class {
     create = mockCreate;
   },
 }));
@@ -15,10 +15,10 @@ vi.mock("../../database/database", () => ({ prisma: {} }));
 describe("POST /requests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockCreate.mockResolvedValue(mockTicket);
+    mockCreate.mockResolvedValue(mockRequest);
   });
 
-  it("returns 201 with the created ticket", async () => {
+  it("returns 201 with the created request", async () => {
     const event = makeEvent({
       body: JSON.stringify({
         title: "Fix login bug",

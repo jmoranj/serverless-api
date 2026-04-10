@@ -23,13 +23,19 @@ export class BadRequestError extends AppError {
   }
 }
 
-export function handleError(context: string, error: unknown): APIGatewayProxyResult {
+export function handleError(
+  context: string,
+  error: unknown
+): APIGatewayProxyResult {
   if (error instanceof ZodError) {
     return {
       statusCode: 422,
       body: JSON.stringify({
         message: "Validation failed",
-        issues: error.issues.map((i) => ({ field: i.path.join("."), message: i.message })),
+        issues: error.issues.map((i) => ({
+          field: i.path.join("."),
+          message: i.message,
+        })),
       }),
     };
   }

@@ -27,25 +27,25 @@ provider:
     NODE_ENV: ${opt:stage, "dev"}
 
 functions:
-  createTicket:
-    handler: src/handlers/createTicket.handler
+  createRequest:
+    handler: src/handlers/createRequest.handler
     events:
       - httpApi:
-          path: /tickets
+          path: /requests
           method: post
 
-  getTicketById:
-    handler: src/handlers/getTicketById.handler
+  getRequestById:
+    handler: src/handlers/getRequestById.handler
     events:
       - httpApi:
-          path: /tickets/{id}
+          path: /requests/{id}
           method: get
 
-  listTickets:
-    handler: src/handlers/listTickets.handler
+  listRequests:
+    handler: src/handlers/listRequests.handler
     events:
       - httpApi:
-          path: /tickets
+          path: /requests
           method: get
 
   migrate:

@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent } from "aws-lambda";
-import { Ticket } from "../models/ticketSchema";
+import { Request } from "../models/requestSchema";
 
 export function makeEvent(
   overrides: Partial<APIGatewayProxyEvent> = {}
@@ -21,7 +21,7 @@ export function makeEvent(
   };
 }
 
-export const mockTicket: Ticket = {
+export const mockRequest: Request = {
   id: "abc-123",
   title: "Fix login bug",
   description: "Users cannot login with SSO",

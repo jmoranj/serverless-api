@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { handler } from "../../handlers/getTicketById";
-import { makeEvent, mockTicket } from "../helpers";
+import { handler } from "../../handlers/getRequestById";
+import { makeEvent, mockRequest } from "../helpers";
 
 const mockFindById = vi.hoisted(() => vi.fn());
 
-vi.mock("../../repositories/ticketRepository", () => ({
-  TicketRepository: class {
+vi.mock("../../repositories/requestRepository", () => ({
+  RequestRepository: class {
     findById = mockFindById;
   },
 }));
@@ -17,8 +17,8 @@ describe("GET /requests/{id}", () => {
     vi.clearAllMocks();
   });
 
-  it("returns 200 with the ticket when found", async () => {
-    mockFindById.mockResolvedValue(mockTicket);
+  it("returns 200 with the request when found", async () => {
+    mockFindById.mockResolvedValue(mockRequest);
 
     const event = makeEvent({ pathParameters: { id: "abc-123" } });
 
@@ -29,7 +29,7 @@ describe("GET /requests/{id}", () => {
     expect(body.data).toMatchObject({ id: "abc-123", title: "Fix login bug" });
   });
 
-  it("returns 404 when ticket does not exist", async () => {
+  it("returns 404 when request does not exist", async () => {
     mockFindById.mockResolvedValue(null);
 
     const event = makeEvent({ pathParameters: { id: "nonexistent" } });
