@@ -1,19 +1,18 @@
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@prisma/client";
+import { resolveMysqlConnectionParts } from "./resolveMysqlConnection";
 
 const globalWithPrisma = global as typeof global & { prisma?: PrismaClient };
 
 function createClient(): PrismaClient {
-  const { hostname, port, username, password, pathname } = new URL(
-    process.env.DATABASE_URL!
-  );
+  const { host, port, user, password, database } = resolveMysqlConnectionParts();
 
   const adapter = new PrismaMariaDb({
-    host: hostname,
-    port: Number(port) ?? 3306,
-    user: username,
+    host,
+    port,
+    user,
     password,
-    database: pathname.slice(1),
+    database,
   });
 
   return new PrismaClient({ adapter });
