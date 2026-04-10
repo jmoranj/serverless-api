@@ -14,3 +14,10 @@ export type Request = CreateRequestInput & {
   status: "OPEN" | "IN_PROGRESS" | "DONE" | "CANCELLED";
   createdAt: string;
 };
+
+export const listRequestsQuerySchema = z.object({
+  createdBy: z.string().min(2).optional(),
+  status: z.enum(["OPEN", "IN_PROGRESS", "DONE", "CANCELLED"]).optional(),
+});
+
+export type ListRequestsQuery = z.infer<typeof listRequestsQuerySchema>;

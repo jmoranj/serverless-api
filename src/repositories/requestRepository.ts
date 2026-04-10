@@ -1,6 +1,10 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../database/database";
-import { CreateRequestInput, Request } from "../models/requestSchema";
+import {
+  CreateRequestInput,
+  ListRequestsQuery,
+  Request,
+} from "../models/requestSchema";
 
 type PrismaRequestRow = Prisma.RequestGetPayload<object>;
 
@@ -15,8 +19,14 @@ export class RequestRepository {
     return toRequest(created);
   }
 
-  async findMany(): Promise<Request[]> {
+  async findMany(filters?: ListRequestsQuery): Promise<Request[]> {
+    const where: Prisma.RequestWhereInput = {};
+
+    if (filters?.createdBy) where.createdBy = filters.createdBy;
+    if (filters?.status) where.status = filters.status;
+
     const rows = await prisma.request.findMany({
+      where,
       orderBy: { createdAt: "desc" },
     });
 

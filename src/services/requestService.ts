@@ -1,4 +1,8 @@
-import { CreateRequestInput, Request } from "../models/requestSchema";
+import {
+  CreateRequestInput,
+  ListRequestsQuery,
+  Request,
+} from "../models/requestSchema";
 import { RequestRepository } from "../repositories/requestRepository";
 import { NotFoundError } from "../utils/errors";
 
@@ -9,8 +13,8 @@ export class RequestService {
     return this.repository.create(data);
   }
 
-  async list(): Promise<Request[]> {
-    return this.repository.findMany();
+  async list(filters?: ListRequestsQuery): Promise<Request[]> {
+    return this.repository.findMany(filters);
   }
 
   async getById(id: string): Promise<Request> {
