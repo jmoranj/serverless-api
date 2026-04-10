@@ -1,7 +1,22 @@
 {
+  "scripts": {
+    "predeploy": "npx prisma generate",
+    "deploy": "serverless deploy",
+    "migrate": "aws lambda invoke --function-name serverless-api-dev-migrate --payload '{}' --cli-binary-format raw-in-base64-out /tmp/migration.json && cat /tmp/migration.json"
+  },
   "devDependencies": {
     "@types/node": "^25.5.2",
     "esbuild": "^0.27.7",
+    "prisma": "^7.7.0",
+    "serverless-offline": "^14.5.0",
     "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "@prisma/adapter-mariadb": "^7.7.0",
+    "@prisma/client": "^7.7.0",
+    "@types/aws-lambda": "^8.10.161",
+    "aws-lambda": "^1.0.7",
+    "mysql2": "^3.21.0",
+    "zod": "^4.3.6"
   }
 }
