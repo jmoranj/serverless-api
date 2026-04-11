@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
-import { databaseUrlFromEnv } from "./src/database/resolveMysqlConnection";
+import { databaseUrlForPrismaConfig } from "./src/database/resolveMysqlConnection";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -8,6 +8,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: databaseUrlFromEnv(),
+    url: databaseUrlForPrismaConfig(),
   },
 });

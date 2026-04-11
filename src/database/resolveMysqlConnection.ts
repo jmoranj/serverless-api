@@ -30,3 +30,13 @@ export function databaseUrlFromEnv(): string {
   const { host, port, user, password, database } = resolveMysqlConnectionParts();
   return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
 }
+
+export function databaseUrlForPrismaConfig(): string {
+  const host = trimOrEmpty(process.env.DB_HOST);
+  const user = trimOrEmpty(process.env.DB_USER);
+  const database = trimOrEmpty(process.env.DB_NAME);
+  if (!host || !user || !database) {
+    return "mysql://prisma:prisma@127.0.0.1:3306/prisma";
+  }
+  return databaseUrlFromEnv();
+}
