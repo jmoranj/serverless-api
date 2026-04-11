@@ -18,6 +18,7 @@ custom:
 provider:
   name: aws
   runtime: nodejs20.x
+  timeout: 29
   vpc:
     subnetIds:
       - !Ref PrivateSubnetA
