@@ -9,12 +9,12 @@ API HTTP de **requests** (tickets) em **AWS Lambda** + **API Gateway HTTP API**,
 | ------------------ | ----------------------------------------------------------------------------------------- |
 | **Node.js 20+**    | Runtime alinhado ao Lambda (`nodejs20.x`).                                                |
 | **AWS CLI**        | Configurado (`aws configure`) com permissão para deploy na conta/região.                  |
-| **Arquivo `.env`** | Variáveis abaixo disponíveis no shell na hora do `deploy` (ou carregadas pelo seu fluxo). |
+| **Arquivo `.env`** | Variáveis para deploy e/ou desenvolvimento local (ver tabela). |
 
 
 ## Variáveis de ambiente
 
-Conexão com o MySQL usa **só** `DB_`*. Você precisa definir **antes do deploy**:
+Conexão com o MySQL usa **só** `DB_*`:
 
 
 | Variável      | Descrição                                                                                                                                                                            |
@@ -23,11 +23,11 @@ Conexão com o MySQL usa **só** `DB_`*. Você precisa definir **antes do deploy
 | `DB_PASSWORD` | Senha (também usada no parâmetro CloudFormation `DBPassword`).                                                                                                                       |
 | `DB_NAME`     | Nome do banco criado na instância RDS (e no local).                                                                                                                                  |
 | `VPC_ID`      | ID da VPC onde serão criadas subnets privadas, NAT e o RDS.                                                                                                                          |
-| `DB_HOST`     | **Local:** host do MySQL (ex. `127.0.0.1`). **AWS:** não exporte no shell no deploy — o `npm run deploy` remove `DB_HOST` do ambiente e o Serverless preenche com o endpoint do RDS. |
+| `DB_HOST`     | Só no **local** (host do MySQL, ex. `127.0.0.1`). Na AWS o RDS já recebe o host pelo deploy. |
 | `DB_PORT`     | Opcional; padrão `3306`.                                                                                                                                                             |
 
 
-`NODE_ENV` segue o stage do Serverless (padrão `dev`).
+`NODE_ENV` segue o stage do Serverless (`npm run deploy` usa stage **prod** por padrão).
 
 ## Por que RDS (MySQL) e não só DynamoDB?
 
@@ -43,7 +43,7 @@ npm install
 npm predeploy
 ```
 
-Subir a API localmente (MySQL acessível; no `.env` defina `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, ver tabela acima):
+Subir a API localmente (MySQL acessível). No `.env`, além de `DB_USER`, `DB_PASSWORD` e `DB_NAME`, defina **`DB_HOST`** (apenas para o local).
 
 ```bash
 npm migrate:local
@@ -59,7 +59,7 @@ npm run deploy    # gera Prisma Client (predeploy) e faz serverless deploy
 npm run migrate   # invoca a Lambda `migrate` no AWS (cria/atualiza tabela no RDS)
 ```
 
-O script `migrate` chama a função `serverless-api-dev-migrate` (stage **dev**). Se usar outro stage, ajuste o nome da função no `package.json`.
+O script `migrate` chama `serverless-api-prod-migrate` (alinhado ao `deploy` em **prod**). Para outro stage, rode o `aws lambda invoke` com o nome correspondente.
 
 Após o deploy, o terminal mostra o **endpoint** da HTTP API — use essa URL como base nos exemplos abaixo.
 
